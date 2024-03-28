@@ -16,18 +16,38 @@ async function init() {
       movie(id: String!): Movie
     }
     type Mutation {
-      createMovie(title: String!): Boolean
+      createMovie(input: CreateMovieInput!): Movie!
       deleteMovie(id: String!): Boolean
-      updateMovie(id: String!, title: String!): Boolean
+      updateMovie(input: UpdateMovieInput!): Movie!
     }
     type Movie {
       id: String!
       title: String!
+      director: String
+      releaseYear: Int
+      genre: String
+      rating: Float
+      createdAt: String
+      updatedAt: String
+    }
+    input CreateMovieInput {
+      title: String!
+      director: String
+      releaseYear: Int!
+      genre: String!
+      rating: Float!
+    }
+    input UpdateMovieInput {
+      id: String!
+      title: String
+      director: String
+      releaseYear: Int
+      genre: String
+      rating: Float
     }
     `,
     resolvers: {
       Query: {
-        hello: () => `Hey there`,
         movie: async (_, { id }) => {
           try {
             const movie = await prismaClient.movie.findUnique({
@@ -50,13 +70,20 @@ async function init() {
         }
       },
       Mutation: {
-        createMovie: async(_, { title }: {title: string}) => {
-          await prismaClient.movie.create({
-            data: {
-              title
-            },
-          })
-          return true;
+        createMovie: async (_, { input }) => {
+          try {
+            const movie = await prismaClient.movie.create({
+              data: {
+                ...input,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              }
+            });
+            return movie;
+          } catch (error) {
+            console.error('Error creating movie:', error);
+            throw error;
+          }
         },
         deleteMovie: async (_, { id }) => {
           try {
@@ -69,15 +96,17 @@ async function init() {
             throw error;
           }
         },
-        updateMovie: async (_, { id, title }) => {  // Resolver for updating a movie by ID
+        updateMovie: async (_, { input }) => {
+          const { id, ...data } = input;
           try {
-            await prismaClient.movie.update({
+            const movie = await prismaClient.movie.update({
               where: { id },
               data: {
-                title
+                ...data,
+                updatedAt: new Date().toISOString()
               }
             });
-            return true;
+            return movie;
           } catch (error) {
             console.error('Error updating movie:', error);
             throw error;
@@ -93,7 +122,7 @@ async function init() {
   });
   app.use("/graphql", expressMiddleware(gqlserver));
 
-  app.listen(PORT, () => console.log(`server is riu ${PORT}`));
+  app.listen(PORT, () => console.log(`server is running on port ${PORT}`));
 }
 
 init();
