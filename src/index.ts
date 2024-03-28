@@ -11,15 +11,29 @@ async function init() {
   const gqlserver = new ApolloServer({
     typeDefs: `
     type Query {
-        hello: String
+      hello: String
+      movies: [Movie!]!
     }
     type Mutation {
       createMovie(title: String!): Boolean
+    }
+    type Movie {
+      id: String!
+      title: String!
     }
     `,
     resolvers: {
       Query: {
         hello: () => `Hey there`,
+        movies: async () => {
+          try {
+            const movies = await prismaClient.movie.findMany();
+            return movies;
+          } catch (error) {
+            console.error('Error fetching movies:', error);
+            throw error;
+          }
+        }
       },
       Mutation: {
         createMovie: async(_, { title }: {title: string}) => {
