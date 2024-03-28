@@ -13,6 +13,7 @@ async function init() {
     type Query {
       hello: String
       movies: [Movie!]!
+      movie(id: String!): Movie
     }
     type Mutation {
       createMovie(title: String!): Boolean
@@ -25,6 +26,17 @@ async function init() {
     resolvers: {
       Query: {
         hello: () => `Hey there`,
+        movie: async (_, { id }) => {
+          try {
+            const movie = await prismaClient.movie.findUnique({
+              where: { id }
+            });
+            return movie;
+          } catch (error) {
+            console.error('Error fetching movie:', error);
+            throw error;
+          }
+        },
         movies: async () => {
           try {
             const movies = await prismaClient.movie.findMany();
