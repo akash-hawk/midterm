@@ -18,6 +18,7 @@ async function init() {
     type Mutation {
       createMovie(title: String!): Boolean
       deleteMovie(id: String!): Boolean
+      updateMovie(id: String!, title: String!): Boolean
     }
     type Movie {
       id: String!
@@ -65,6 +66,20 @@ async function init() {
             return true;
           } catch (error) {
             console.error('Error deleting movie:', error);
+            throw error;
+          }
+        },
+        updateMovie: async (_, { id, title }) => {  // Resolver for updating a movie by ID
+          try {
+            await prismaClient.movie.update({
+              where: { id },
+              data: {
+                title
+              }
+            });
+            return true;
+          } catch (error) {
+            console.error('Error updating movie:', error);
             throw error;
           }
         }
