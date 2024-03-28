@@ -1,7 +1,7 @@
 import express from "express";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
-// import { prismaClient } from "./lib/db";
+import { prismaClient } from "./lib/db";
 
 async function init() {
   const app = express();
@@ -13,11 +13,24 @@ async function init() {
     type Query {
         hello: String
     }
+    type Mutation {
+      createMovie(title: String!): Boolean
+    }
     `,
     resolvers: {
       Query: {
         hello: () => `Hey there`,
       },
+      Mutation: {
+        createMovie: async(_, { title }: {title: string}) => {
+          await prismaClient.movie.create({
+            data: {
+              title
+            },
+          })
+          return true;
+        }
+      }
     },
   });
   await gqlserver.start();
