@@ -1,0 +1,14 @@
+{
+  "name": "backend_midterm",
+  "version": "1.0.0",
+  "description": "Midterm Project",
+  "main": "index.js",
+  "author": "Akash Goindi",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
