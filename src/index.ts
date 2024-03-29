@@ -51,7 +51,7 @@ async function init() {
         movie: async (_, { id }) => {
           try {
             const movie = await prismaClient.movie.findUnique({
-              where: { id }
+              where: { id },
             });
             return movie;
           } catch (error) {
@@ -67,7 +67,7 @@ async function init() {
             console.error('Error fetching movies:', error);
             throw error;
           }
-        }
+        },
       },
       Mutation: {
         createMovie: async (_, { input }) => {
@@ -111,7 +111,7 @@ async function init() {
             console.error('Error updating movie:', error);
             throw error;
           }
-        }
+        },
       }
     },
   });
