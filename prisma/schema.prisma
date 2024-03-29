@@ -14,14 +14,25 @@ datasource db {
 }
 
 model Movie {
-  id          String       @id @default(uuid())
-  title       String       @map("title")
-  director    String       @map("director")
-  releaseYear Int?         @map("release_year")
-  genre       String?      @map("genre")
-  rating      Float?       @map("rating")
-  createdAt   DateTime?    @default(now()) @map("created_at")
-  updatedAt   DateTime?    @map("updated_at")
+  id           String  @id @default(uuid())
+  title         String  @map("title")
+  director     String  @map("director")
+  releaseYear  Int?    @map("release_year")
+  genre        String?  @map("genre")
+  rating       Float?   @map("rating")
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @map("updated_at")
+
+  discussions   Discussion[]
 
   @@map("movies")
+}
+
+model Discussion {
+  id           String  @id @default(uuid())
+  content      String
+  movie        Movie  @relation(fields: [movieId], references: [id])
+  movieId      String 
+
+  @@map("discussions")
 }

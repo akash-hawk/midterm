@@ -14,13 +14,27 @@ async function init() {
       hello: String
       movies: [Movie!]!
       movie(id: String!): Movie
+      discussion(id: String!): Discussion
+      discussions: [Discussion!]!
     }
     type Mutation {
       createMovie(input: CreateMovieInput!): Movie!
       deleteMovie(id: String!): Boolean
       updateMovie(input: UpdateMovieInput!): Movie!
+      createDiscussion(input: createDiscussionInput!): Discussion!
     }
     type Movie {
+      id: String!
+      title: String!
+      director: String
+      releaseYear: Int
+      genre: String
+      rating: Float
+      discussions: [Discussion]!
+      createdAt: String
+      updatedAt: String
+    }
+    type MovieShort {
       id: String!
       title: String!
       director: String
@@ -45,13 +59,24 @@ async function init() {
       genre: String
       rating: Float
     }
+    type Discussion {
+      id: String!
+      content: String!
+      movie: MovieShort
+      movieId: String
+    }
+    
+    input createDiscussionInput {
+      content: String
+      movieId: String
+    }
     `,
     resolvers: {
       Query: {
         movie: async (_, { id }) => {
           try {
             const movie = await prismaClient.movie.findUnique({
-              where: { id },
+              where: { id }
             });
             return movie;
           } catch (error) {
@@ -59,15 +84,46 @@ async function init() {
             throw error;
           }
         },
+        discussion: async (_, { id }) => {
+          try {
+            const discussion = await prismaClient.discussion.findUnique({
+              where: { id },
+              include: {
+                movie: true,
+              }
+            });
+            return discussion;
+          } catch (error) {
+            console.error('Error fetching movie:', error);
+            throw error;
+          }
+        },
         movies: async () => {
           try {
-            const movies = await prismaClient.movie.findMany();
+            const movies = await prismaClient.movie.findMany({
+              include: {
+                discussions: true,
+              },
+            });
             return movies;
           } catch (error) {
             console.error('Error fetching movies:', error);
             throw error;
           }
         },
+        discussions: async () => {
+          try {
+            const discussions = await prismaClient.discussion.findMany({
+              include: {
+                movie: true,
+              },
+            });
+            return discussions;
+          } catch (error) {
+            console.error('Error fetching movies:', error);
+            throw error;
+          }
+        }
       },
       Mutation: {
         createMovie: async (_, { input }) => {
@@ -85,6 +141,43 @@ async function init() {
             throw error;
           }
         },
+        createDiscussion: async (_, { input }) => {
+          try {
+            const { movieId, ...discussionData } = input;
+        
+            // Check if the movie with provided movieId exists
+            const existingMovie = await prismaClient.movie.findUnique({
+              where: {
+                id: movieId,
+              },
+            });
+        
+            if (!existingMovie) {
+              throw new Error(`Movie with ID ${movieId} not found`);
+            }
+        
+            // Create the discussion associated with the movie
+            const discussion = await prismaClient.discussion.create({
+              data: {
+                ...discussionData,
+                movie: {
+                  connect: {
+                    id: movieId,
+                  },
+                },
+              },
+              include: {
+                movie: true, // Include the movie field
+              },
+            });
+        
+            return discussion;
+          } catch (error) {
+            console.error('Error creating discussion:', error);
+            throw error;
+          }
+        },
+        
         deleteMovie: async (_, { id }) => {
           try {
             await prismaClient.movie.delete({
@@ -111,7 +204,7 @@ async function init() {
             console.error('Error updating movie:', error);
             throw error;
           }
-        },
+        }
       }
     },
   });

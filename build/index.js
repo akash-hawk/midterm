@@ -38,13 +38,27 @@ function init() {
       hello: String
       movies: [Movie!]!
       movie(id: String!): Movie
+      discussion(id: String!): Discussion
+      discussions: [Discussion!]!
     }
     type Mutation {
       createMovie(input: CreateMovieInput!): Movie!
       deleteMovie(id: String!): Boolean
       updateMovie(input: UpdateMovieInput!): Movie!
+      createDiscussion(input: createDiscussionInput!): Discussion!
     }
     type Movie {
+      id: String!
+      title: String!
+      director: String
+      releaseYear: Int
+      genre: String
+      rating: Float
+      discussions: [Discussion]!
+      createdAt: String
+      updatedAt: String
+    }
+    type MovieShort {
       id: String!
       title: String!
       director: String
@@ -69,13 +83,24 @@ function init() {
       genre: String
       rating: Float
     }
+    type Discussion {
+      id: String!
+      content: String!
+      movie: MovieShort
+      movieId: String
+    }
+    
+    input createDiscussionInput {
+      content: String
+      movieId: String
+    }
     `,
             resolvers: {
                 Query: {
                     movie: (_1, _a) => __awaiter(this, [_1, _a], void 0, function* (_, { id }) {
                         try {
                             const movie = yield db_1.prismaClient.movie.findUnique({
-                                where: { id },
+                                where: { id }
                             });
                             return movie;
                         }
@@ -84,9 +109,28 @@ function init() {
                             throw error;
                         }
                     }),
+                    discussion: (_2, _b) => __awaiter(this, [_2, _b], void 0, function* (_, { id }) {
+                        try {
+                            const discussion = yield db_1.prismaClient.discussion.findUnique({
+                                where: { id },
+                                include: {
+                                    movie: true,
+                                }
+                            });
+                            return discussion;
+                        }
+                        catch (error) {
+                            console.error('Error fetching movie:', error);
+                            throw error;
+                        }
+                    }),
                     movies: () => __awaiter(this, void 0, void 0, function* () {
                         try {
-                            const movies = yield db_1.prismaClient.movie.findMany();
+                            const movies = yield db_1.prismaClient.movie.findMany({
+                                include: {
+                                    discussions: true,
+                                },
+                            });
                             return movies;
                         }
                         catch (error) {
@@ -94,9 +138,23 @@ function init() {
                             throw error;
                         }
                     }),
+                    discussions: () => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            const discussions = yield db_1.prismaClient.discussion.findMany({
+                                include: {
+                                    movie: true,
+                                },
+                            });
+                            return discussions;
+                        }
+                        catch (error) {
+                            console.error('Error fetching movies:', error);
+                            throw error;
+                        }
+                    })
                 },
                 Mutation: {
-                    createMovie: (_2, _b) => __awaiter(this, [_2, _b], void 0, function* (_, { input }) {
+                    createMovie: (_3, _c) => __awaiter(this, [_3, _c], void 0, function* (_, { input }) {
                         try {
                             const movie = yield db_1.prismaClient.movie.create({
                                 data: Object.assign(Object.assign({}, input), { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
@@ -108,7 +166,37 @@ function init() {
                             throw error;
                         }
                     }),
-                    deleteMovie: (_3, _c) => __awaiter(this, [_3, _c], void 0, function* (_, { id }) {
+                    createDiscussion: (_4, _d) => __awaiter(this, [_4, _d], void 0, function* (_, { input }) {
+                        try {
+                            const { movieId } = input, discussionData = __rest(input, ["movieId"]);
+                            // Check if the movie with provided movieId exists
+                            const existingMovie = yield db_1.prismaClient.movie.findUnique({
+                                where: {
+                                    id: movieId,
+                                },
+                            });
+                            if (!existingMovie) {
+                                throw new Error(`Movie with ID ${movieId} not found`);
+                            }
+                            // Create the discussion associated with the movie
+                            const discussion = yield db_1.prismaClient.discussion.create({
+                                data: Object.assign(Object.assign({}, discussionData), { movie: {
+                                        connect: {
+                                            id: movieId,
+                                        },
+                                    } }),
+                                include: {
+                                    movie: true, // Include the movie field
+                                },
+                            });
+                            return discussion;
+                        }
+                        catch (error) {
+                            console.error('Error creating discussion:', error);
+                            throw error;
+                        }
+                    }),
+                    deleteMovie: (_5, _e) => __awaiter(this, [_5, _e], void 0, function* (_, { id }) {
                         try {
                             yield db_1.prismaClient.movie.delete({
                                 where: { id }
@@ -120,7 +208,7 @@ function init() {
                             throw error;
                         }
                     }),
-                    updateMovie: (_4, _d) => __awaiter(this, [_4, _d], void 0, function* (_, { input }) {
+                    updateMovie: (_6, _f) => __awaiter(this, [_6, _f], void 0, function* (_, { input }) {
                         const { id } = input, data = __rest(input, ["id"]);
                         try {
                             const movie = yield db_1.prismaClient.movie.update({
@@ -133,7 +221,7 @@ function init() {
                             console.error('Error updating movie:', error);
                             throw error;
                         }
-                    }),
+                    })
                 }
             },
         });
