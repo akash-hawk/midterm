@@ -11,7 +11,6 @@ async function init() {
   const gqlserver = new ApolloServer({
     typeDefs: `
     type Query {
-      hello: String
       movies: [Movie!]!
       movie(id: String!): Movie
       discussion(id: String!): Discussion
@@ -20,6 +19,7 @@ async function init() {
     type Mutation {
       createMovie(input: CreateMovieInput!): Movie!
       deleteMovie(id: String!): Boolean
+      deleteDiscussion(id: String!): Boolean
       updateMovie(input: UpdateMovieInput!): Movie!
       createDiscussion(input: createDiscussionInput!): Discussion!
     }
@@ -30,7 +30,7 @@ async function init() {
       releaseYear: Int
       genre: String
       rating: Float
-      discussions: [Discussion]!
+      discussions: [Discussion]
       createdAt: String
       updatedAt: String
     }
@@ -76,7 +76,10 @@ async function init() {
         movie: async (_, { id }) => {
           try {
             const movie = await prismaClient.movie.findUnique({
-              where: { id }
+              where: { id },
+              include: {
+                discussions: true,
+              }
             });
             return movie;
           } catch (error) {
@@ -180,7 +183,24 @@ async function init() {
         
         deleteMovie: async (_, { id }) => {
           try {
+            await prismaClient.discussion.deleteMany({
+              where: {
+                movieId: id
+              }
+            });
+
             await prismaClient.movie.delete({
+              where: { id }
+            });
+            return true;
+          } catch (error) {
+            console.error('Error deleting movie:', error);
+            throw error;
+          }
+        },
+        deleteDiscussion: async (_, { id }) => {
+          try {
+            await prismaClient.discussion.delete({
               where: { id }
             });
             return true;

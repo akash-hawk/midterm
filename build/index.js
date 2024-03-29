@@ -35,7 +35,6 @@ function init() {
         const gqlserver = new server_1.ApolloServer({
             typeDefs: `
     type Query {
-      hello: String
       movies: [Movie!]!
       movie(id: String!): Movie
       discussion(id: String!): Discussion
@@ -44,6 +43,7 @@ function init() {
     type Mutation {
       createMovie(input: CreateMovieInput!): Movie!
       deleteMovie(id: String!): Boolean
+      deleteDiscussion(id: String!): Boolean
       updateMovie(input: UpdateMovieInput!): Movie!
       createDiscussion(input: createDiscussionInput!): Discussion!
     }
@@ -54,7 +54,7 @@ function init() {
       releaseYear: Int
       genre: String
       rating: Float
-      discussions: [Discussion]!
+      discussions: [Discussion]
       createdAt: String
       updatedAt: String
     }
@@ -100,7 +100,10 @@ function init() {
                     movie: (_1, _a) => __awaiter(this, [_1, _a], void 0, function* (_, { id }) {
                         try {
                             const movie = yield db_1.prismaClient.movie.findUnique({
-                                where: { id }
+                                where: { id },
+                                include: {
+                                    discussions: true,
+                                }
                             });
                             return movie;
                         }
@@ -198,6 +201,11 @@ function init() {
                     }),
                     deleteMovie: (_5, _e) => __awaiter(this, [_5, _e], void 0, function* (_, { id }) {
                         try {
+                            yield db_1.prismaClient.discussion.deleteMany({
+                                where: {
+                                    movieId: id
+                                }
+                            });
                             yield db_1.prismaClient.movie.delete({
                                 where: { id }
                             });
@@ -208,7 +216,19 @@ function init() {
                             throw error;
                         }
                     }),
-                    updateMovie: (_6, _f) => __awaiter(this, [_6, _f], void 0, function* (_, { input }) {
+                    deleteDiscussion: (_6, _f) => __awaiter(this, [_6, _f], void 0, function* (_, { id }) {
+                        try {
+                            yield db_1.prismaClient.discussion.delete({
+                                where: { id }
+                            });
+                            return true;
+                        }
+                        catch (error) {
+                            console.error('Error deleting movie:', error);
+                            throw error;
+                        }
+                    }),
+                    updateMovie: (_7, _g) => __awaiter(this, [_7, _g], void 0, function* (_, { input }) {
                         const { id } = input, data = __rest(input, ["id"]);
                         try {
                             const movie = yield db_1.prismaClient.movie.update({
