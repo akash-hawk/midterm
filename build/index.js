@@ -27,11 +27,13 @@ const express_1 = __importDefault(require("express"));
 const server_1 = require("@apollo/server");
 const express4_1 = require("@apollo/server/express4");
 const db_1 = require("./lib/db");
+const cors_1 = __importDefault(require("cors"));
 function init() {
     return __awaiter(this, void 0, void 0, function* () {
         const app = (0, express_1.default)();
         const PORT = Number(process.env.PORT) || 3000;
         app.use(express_1.default.json());
+        app.use((0, cors_1.default)());
         const gqlserver = new server_1.ApolloServer({
             typeDefs: `
     type Query {

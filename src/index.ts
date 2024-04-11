@@ -9,10 +9,7 @@ async function init() {
   const PORT = Number(process.env.PORT) || 3000;
   app.use(express.json());
 
-  app.use(cors());
-  // app.use(cors({
-  //   origin: 'https://yourfrontenddomain.com'
-  // }));
+  app.use(cors({}));
 
   const gqlserver = new ApolloServer({
     typeDefs: `
